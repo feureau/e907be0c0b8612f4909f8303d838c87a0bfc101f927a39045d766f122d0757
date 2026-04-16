@@ -28,7 +28,7 @@ class MainApp extends ConsumerWidget {
     final progressAsync = ref.watch(initializeProgressProvider);
 
     return MaterialApp(
-      title: 'Turbolingo',
+      title: 'e907',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -240,7 +240,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Turbolingo'),
+        title: const Text('e907'),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),

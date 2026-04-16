@@ -1,11 +1,11 @@
 /// App-wide constants
 class AppConstants {
   // App information
-  static const String appName = 'Turbolingo';
+  static const String appName = 'e907';
   static const String appVersion = '0.1.0';
   
   // Database constants
-  static const String databaseName = 'turbolingo.db';
+  static const String databaseName = 'e907.db';
   
   // Language constants
   static const String defaultLanguage = 'Japanese';

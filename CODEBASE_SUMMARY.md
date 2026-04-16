@@ -1,7 +1,7 @@
-# Turbolingo Codebase Summary
+# e907 Codebase Summary
 
 ## Overview
-This document provides a comprehensive summary of the Turbolingo language learning application codebase, highlighting key components, architecture decisions, and implementation details.
+This document provides a comprehensive summary of the e907 language learning application codebase, highlighting key components, architecture decisions, and implementation details.
 
 ## Project Structure
 

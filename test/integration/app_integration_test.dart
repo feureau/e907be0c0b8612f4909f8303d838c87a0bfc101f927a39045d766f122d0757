@@ -18,7 +18,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check that main screen is displayed
-      expect(find.text('Turbolingo'), findsOneWidget);
+      expect(find.text('e907'), findsOneWidget);
       expect(find.byType(BottomNavigationBar), findsOneWidget);
       
       // Check that home tab is selected by default
@@ -67,7 +67,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Check that default user is created/loaded
-      expect(find.text('Turbolingo'), findsOneWidget);
+      expect(find.text('e907'), findsOneWidget);
     });
   });
 }

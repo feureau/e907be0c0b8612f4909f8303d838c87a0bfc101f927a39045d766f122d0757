@@ -1,7 +1,7 @@
-# Turbolingo - Japanese Language Learning App
+# e907 - Japanese Language Learning App
 
 ## Overview
-Turbolingo is a multi-language learning application with a focus on Japanese. This project implements a comprehensive language learning platform with features including flashcards, grammar exercises, conversation practice, and progress tracking.
+e907 is a multi-language learning application with a focus on Japanese. This project implements a comprehensive language learning platform with features including flashcards, grammar exercises, conversation practice, and progress tracking.
 
 ## Features Implemented
 1. **User Profile Management** - Track user preferences and settings

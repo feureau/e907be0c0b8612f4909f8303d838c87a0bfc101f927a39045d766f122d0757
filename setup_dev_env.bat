@@ -1,5 +1,5 @@
 @echo off
-echo Setting up Turbolingo development environment...
+echo Setting up e907 development environment...
 echo.
 
 REM Check if Flutter is installed

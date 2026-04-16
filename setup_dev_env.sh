@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Setting up Turbolingo development environment..."
+echo "Setting up e907 development environment..."
 echo
 
 # Check if Flutter is installed
