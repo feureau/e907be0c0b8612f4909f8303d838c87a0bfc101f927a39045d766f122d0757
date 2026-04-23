@@ -1,12 +1,9 @@
-import 'dart:isolate';
 import 'dart:typed_data';
-import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:dart_melty_soundfont/dart_melty_soundfont.dart';
-import 'package:flutter_pcm_sound/flutter_pcm_sound.dart';
 
 class AudioService {
-  late Synth _synth;
+  late Synthesizer _synth;
   bool _isInitialized = false;
 
   // Sound effect mappings
@@ -18,20 +15,15 @@ class AudioService {
   Future<void> initialize() async {
     try {
       // Load SoundFont from assets
-      final sf2Bytes = await _loadSoundFontAsset('assets/soundfonts/default.sf2');
-      
-      // Initialize MeltySynth with the SoundFont data
-      _synth = Synth(
-        sf2Bytes,
-        SynthSettings(
-          sampleRate: 44100,
-          blockSize: 64,
-          numWorkers: 4,
-        ),
+      final sf2Bytes = await _loadSoundFontAsset(
+        'assets/soundfonts/default.sf2',
       );
-      
-      // Initialize PCM sound player
-      await PcmSound.initializeEngine();
+
+      // Initialize synthesizer from SoundFont bytes.
+      _synth = Synthesizer.loadByteData(
+        ByteData.sublistView(sf2Bytes),
+        SynthesizerSettings(sampleRate: 44100, blockSize: 64),
+      );
       _isInitialized = true;
     } catch (e) {
       print('Failed to initialize audio service: $e');
@@ -56,7 +48,7 @@ class AudioService {
 
   Future<void> playAchievementSound() async {
     if (!_isInitialized) return;
-    
+
     // Play a short melody for achievements
     await _playNote(ACHIEVEMENT_SOUND, 0.2, 100);
     await Future.delayed(const Duration(milliseconds: 100));
@@ -67,7 +59,7 @@ class AudioService {
 
   Future<void> playStreakSound() async {
     if (!_isInitialized) return;
-    
+
     // Play a rising sequence for streaks
     await _playNote(STREAK_SOUND, 0.15, 90);
     await Future.delayed(const Duration(milliseconds: 50));
@@ -80,7 +72,7 @@ class AudioService {
 
   Future<void> playBackgroundMusic() async {
     if (!_isInitialized) return;
-    
+
     // Generate a simple looping background ambience
     // This would typically be a longer musical piece
     // For simplicity, we'll just loop a chord progression
@@ -96,31 +88,35 @@ class AudioService {
   Future<void> _playNote(int note, double duration, int velocity) async {
     try {
       // Start playing the note
-      _synth.noteOn(0, note, velocity);
-      
+      _synth.noteOn(channel: 0, key: note, velocity: velocity);
+
       // Wait for the duration
       await Future.delayed(Duration(milliseconds: (duration * 1000).toInt()));
-      
+
       // Stop playing the note
-      _synth.noteOff(0, note);
+      _synth.noteOff(channel: 0, key: note);
     } catch (e) {
       print('Error playing note: $e');
     }
   }
 
-  Future<void> _playChord(List<int> notes, double duration, int velocity) async {
+  Future<void> _playChord(
+    List<int> notes,
+    double duration,
+    int velocity,
+  ) async {
     try {
       // Start playing all notes in the chord
       for (final note in notes) {
-        _synth.noteOn(0, note, velocity);
+        _synth.noteOn(channel: 0, key: note, velocity: velocity);
       }
-      
+
       // Wait for the duration
       await Future.delayed(Duration(milliseconds: (duration * 1000).toInt()));
-      
+
       // Stop playing all notes
       for (final note in notes) {
-        _synth.noteOff(0, note);
+        _synth.noteOff(channel: 0, key: note);
       }
     } catch (e) {
       print('Error playing chord: $e');

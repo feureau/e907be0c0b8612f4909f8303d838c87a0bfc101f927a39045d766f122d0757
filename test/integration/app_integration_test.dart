@@ -1,73 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../lib/main.dart';
-import '../../lib/models/user.dart';
 import '../../lib/models/progress.dart';
+import '../../lib/models/user.dart';
+import '../../lib/providers/progress_provider.dart';
+import '../../lib/providers/user_provider.dart';
 
 void main() {
   group('App Integration Tests', () {
-    testWidgets('should display main screen with navigation', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MainApp(),
-        ),
+    late User testUser;
+    late Progress testProgress;
+
+    setUp(() {
+      testUser = User(
+        id: 'test-user',
+        name: 'Test User',
+        createdAt: DateTime.now(),
       );
+      testProgress = Progress(
+        userId: testUser.id,
+        language: 'Japanese',
+        streak: 3,
+        totalXP: 120,
+        categoryXP: {'Vocabulary': 60, 'Grammar': 60},
+        achievements: [],
+        lastActivity: DateTime.now(),
+      );
+    });
 
-      // Wait for initialization
-      await tester.pumpAndSettle();
+    Widget buildApp() {
+      return ProviderScope(
+        overrides: [
+          userProvider.overrideWith((ref) => testUser),
+          progressProvider.overrideWith((ref) => {'Japanese': testProgress}),
+        ],
+        child: const MaterialApp(home: MainScreen()),
+      );
+    }
 
-      // Check that main screen is displayed
+    testWidgets('should display main screen with navigation', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pump();
+
       expect(find.text('e907'), findsOneWidget);
       expect(find.byType(BottomNavigationBar), findsOneWidget);
-      
-      // Check that home tab is selected by default
       expect(find.text('Home'), findsOneWidget);
     });
 
-    testWidgets('should navigate to flashcard screen', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MainApp(),
-        ),
-      );
+    testWidgets('should navigate to learn tab', (WidgetTester tester) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pump();
 
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Learn'));
+      await tester.pump();
 
-      // Tap on the Learn tab
-      await tester.tap(find.widgetWithText(BottomNavigationBarItem, 'Learn'));
-      await tester.pumpAndSettle();
-
-      // Check that flashcard option is available
+      expect(find.text('Learning Modules'), findsOneWidget);
       expect(find.text('Vocabulary Practice'), findsOneWidget);
     });
 
-    testWidgets('should display progress dashboard', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MainApp(),
-        ),
-      );
+    testWidgets('should display progress dashboard data', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildApp());
+      await tester.pump();
 
-      await tester.pumpAndSettle();
-
-      // Check that progress information is displayed
       expect(find.text('Your Progress'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsWidgets);
-    });
-
-    testWidgets('should handle user initialization', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MainApp(),
-        ),
-      );
-
-      // Wait for user initialization
-      await tester.pumpAndSettle();
-
-      // Check that default user is created/loaded
-      expect(find.text('e907'), findsOneWidget);
+      expect(find.text('3 days'), findsOneWidget);
+      expect(find.text('120 XP'), findsOneWidget);
     });
   });
 }

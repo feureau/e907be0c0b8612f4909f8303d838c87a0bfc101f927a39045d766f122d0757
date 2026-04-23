@@ -1,13 +1,10 @@
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 import '../../lib/services/conversation_service.dart';
 import '../../lib/models/conversation.dart';
-import '../../lib/providers/audio_provider.dart';
+import '../../lib/services/audio_service.dart';
 
-// Generate mock classes
-@GenerateMocks([AudioService])
-import 'conversation_service_test.mocks.dart';
+class MockAudioService extends Mock implements AudioService {}
 
 void main() {
   group('ConversationService', () {
@@ -18,7 +15,7 @@ void main() {
     setUp(() {
       mockAudioService = MockAudioService();
       conversationService = ConversationService(mockAudioService);
-      
+
       testConversation = Conversation(
         id: '1',
         title: 'Test Conversation',
@@ -47,8 +44,10 @@ void main() {
     });
 
     test('should start a conversation session', () async {
-      final session = await conversationService.startConversation(testConversation);
-      
+      final session = await conversationService.startConversation(
+        testConversation,
+      );
+
       expect(session.conversation, equals(testConversation));
       expect(session.currentIndex, equals(0));
       expect(session.userResponses, isEmpty);
@@ -56,9 +55,14 @@ void main() {
     });
 
     test('should process user response and update session', () async {
-      final session = await conversationService.startConversation(testConversation);
-      final updatedSession = await conversationService.processUserResponse(session, 'Test response');
-      
+      final session = await conversationService.startConversation(
+        testConversation,
+      );
+      final updatedSession = await conversationService.processUserResponse(
+        session,
+        'Test response',
+      );
+
       expect(updatedSession.userResponses, hasLength(1));
       expect(updatedSession.userResponses.first, equals('Test response'));
       expect(updatedSession.currentIndex, equals(1));
@@ -73,17 +77,19 @@ void main() {
         translation: 'What would you like to order?',
         audioFile: '',
       );
-      
+
       final suggestions = conversationService.generateResponseSuggestions(turn);
-      
+
       expect(suggestions, isNotEmpty);
       expect(suggestions.first, contains('お願'));
     });
 
     test('should return current turn from session', () async {
-      final session = await conversationService.startConversation(testConversation);
+      final session = await conversationService.startConversation(
+        testConversation,
+      );
       final currentTurn = session.currentTurn;
-      
+
       expect(currentTurn, isNotNull);
       expect(currentTurn!.speaker, equals('Speaker1'));
     });
@@ -96,7 +102,7 @@ void main() {
         userResponses: [],
         score: 0,
       );
-      
+
       expect(completedSession.isCompleted, isTrue);
     });
   });
@@ -123,7 +129,7 @@ void main() {
         difficulty: 1,
         xpReward: 10,
       );
-      
+
       session = ConversationSession(
         conversation: conversation,
         currentIndex: 0,
@@ -134,14 +140,14 @@ void main() {
 
     test('should calculate progress correctly', () {
       expect(session.progress, equals(0.0));
-      
+
       final halfCompletedSession = session.copyWith(currentIndex: 1);
       expect(halfCompletedSession.progress, equals(1.0));
     });
 
     test('should copy with updated values', () {
       final updatedSession = session.copyWith(score: 100);
-      
+
       expect(updatedSession.score, equals(100));
       expect(updatedSession.conversation, equals(session.conversation));
     });

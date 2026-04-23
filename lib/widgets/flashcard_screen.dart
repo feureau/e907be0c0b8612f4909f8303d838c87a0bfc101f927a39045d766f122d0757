@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/vocabulary.dart';
 import '../providers/progress_provider.dart';
 import '../providers/user_provider.dart';
+import '../utils/constants.dart';
 import 'flashcard_widget.dart';
 
 class FlashcardScreen extends ConsumerStatefulWidget {
@@ -28,13 +29,13 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     setState(() {
       _correctCount++;
     });
-    
+
     // Add XP for correct answer
     final user = ref.read(userProvider);
     if (user != null) {
-      ref.read(addXPProvider)(user.id, 10, 'Vocabulary');
+      ref.read(addXPProvider)(AppConstants.defaultLanguage, 10, 'Vocabulary');
     }
-    
+
     // Move to next card
     _nextCard();
   }
@@ -43,7 +44,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     setState(() {
       _incorrectCount++;
     });
-    
+
     // Move to next card
     _nextCard();
   }
@@ -56,7 +57,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
 
   void _previousCard() {
     setState(() {
-      _currentIndex = (_currentIndex - 1 + _vocabularyList.length) % _vocabularyList.length;
+      _currentIndex =
+          (_currentIndex - 1 + _vocabularyList.length) % _vocabularyList.length;
     });
   }
 
@@ -94,7 +96,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               ],
             ),
           ),
-          
+
           // Flashcard
           Expanded(
             child: FlashcardWidget(
@@ -103,7 +105,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               onIncorrect: _handleIncorrect,
             ),
           ),
-          
+
           // Navigation buttons
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -114,10 +116,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                   onPressed: _previousCard,
                   child: const Text('Previous'),
                 ),
-                ElevatedButton(
-                  onPressed: _nextCard,
-                  child: const Text('Next'),
-                ),
+                ElevatedButton(onPressed: _nextCard, child: const Text('Next')),
               ],
             ),
           ),

@@ -1,41 +1,40 @@
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 
-// Provider for DatabaseService
-final databaseServiceProvider = Provider((ref) => DatabaseService());
+final databaseServiceProvider = Provider<DatabaseService>(
+  (ref) => DatabaseService.instance,
+);
 
-// Provider for current user
+final authServiceProvider = Provider<AuthService>((ref) {
+  final dbService = ref.read(databaseServiceProvider);
+  return AuthService(dbService);
+});
+
 final userProvider = StateProvider<User?>((ref) => null);
 
-// Provider for user initialization
 final userInitializationProvider = FutureProvider<User?>((ref) async {
-  final dbService = ref.read(databaseServiceProvider);
-  
-  // For demo purposes, we'll create a default user if none exists
-  // In a real app, you would implement proper user authentication
-  const userId = 'default_user';
-  var user = await dbService.getUser(userId);
-  
-  if (user == null) {
-    user = User(
-      id: userId,
-      name: 'Default User',
-      createdAt: DateTime.now(),
-      preferences: {
-        'language': 'Japanese',
-        'notifications': true,
-      },
-    );
-    await dbService.insertUser(user);
-  }
-  
+  final authService = ref.read(authServiceProvider);
+
+  final user = await authService.createOrGetDefaultUser();
+  ref.read(userProvider.notifier).state = user;
+
   return user;
 });
 
-// Provider for updating user
-final updateUserProvider = Provider((ref) => (User user) async {
-  final dbService = ref.read(databaseServiceProvider);
-  await dbService.updateUser(user);
-  ref.read(userProvider.notifier).state = user;
-});
+final updateUserProvider = Provider(
+  (ref) => (User user) async {
+    final authService = ref.read(authServiceProvider);
+    await authService.updateUser(user);
+    ref.read(userProvider.notifier).state = user;
+  },
+);
+
+final logoutProvider = Provider(
+  (ref) => () async {
+    final authService = ref.read(authServiceProvider);
+    await authService.logout();
+    ref.read(userProvider.notifier).state = null;
+  },
+);

@@ -1,13 +1,13 @@
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:riverpod/riverpod.dart';
-import '../../lib/providers/progress_provider.dart';
-import '../../lib/services/database_service.dart';
-import '../../lib/models/progress.dart';
-import '../../lib/models/user.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:e907/providers/progress_provider.dart';
+import 'package:e907/providers/user_provider.dart';
+import 'package:e907/services/database_service.dart';
+import 'package:e907/models/progress.dart';
+import 'package:e907/models/user.dart';
 
-// Generate mock classes
 @GenerateMocks([DatabaseService])
 import 'progress_provider_test.mocks.dart';
 
@@ -35,10 +35,10 @@ void main() {
         name: 'Test User',
         createdAt: DateTime.now(),
       );
-      
+
       // Set user in provider
       container.read(userProvider.notifier).state = user;
-      
+
       // Mock database service response
       final progress = Progress(
         userId: user.id,
@@ -49,22 +49,16 @@ void main() {
         achievements: [],
         lastActivity: DateTime.now(),
       );
-      
-      when(mockDatabaseService.getProgress(any, any)).thenAnswer(
-        (_) async => progress,
-      );
-      
-      when(mockDatabaseService.updateProgress(any)).thenAnswer(
-        (_) async => {},
-      );
-      
+
+      when(
+        mockDatabaseService.getProgress(any, any),
+      ).thenAnswer((_) async => progress);
+
+      when(mockDatabaseService.updateProgress(any)).thenAnswer((_) async {});
+
       // Add XP
-      await container.read(addXPProvider)(
-        'Japanese', 
-        10, 
-        'Vocabulary'
-      );
-      
+      await container.read(addXPProvider)('Japanese', 10, 'Vocabulary');
+
       // Verify database calls
       verify(mockDatabaseService.getProgress(any, any)).called(1);
       verify(mockDatabaseService.updateProgress(any)).called(1);
@@ -80,15 +74,15 @@ void main() {
         achievements: [],
         lastActivity: DateTime.now(),
       );
-      
+
       final progressMap = {'Japanese': progress};
-      
+
       // Update provider state
       container.read(progressProvider.notifier).state = progressMap;
-      
+
       // Read state
       final state = container.read(progressProvider);
-      
+
       expect(state, isNotNull);
       expect(state!['Japanese'], isNotNull);
       expect(state['Japanese']!.streak, equals(5));

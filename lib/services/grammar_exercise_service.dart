@@ -2,9 +2,19 @@ import '../models/grammar_exercise.dart';
 import 'audio_service.dart';
 
 class GrammarExerciseService {
+  static GrammarExerciseService? _instance;
   final AudioService? audioService;
 
-  GrammarExerciseService(this.audioService);
+  GrammarExerciseService._(this.audioService);
+
+  static GrammarExerciseService get instance {
+    _instance ??= GrammarExerciseService._(_getAudioService());
+    return _instance!;
+  }
+
+  static AudioService? _getAudioService() {
+    return null;
+  }
 
   List<GrammarExercise> getAllExercises() {
     return GrammarExercise.getSampleExercises();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/vocabulary.dart';
 import '../providers/audio_provider.dart';
 
@@ -54,6 +54,10 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final cardWidth = screenSize.width < 360 ? screenSize.width - 32 : 300.0;
+    final cardHeight = screenSize.height < 600 ? 280.0 : 360.0;
+
     return Center(
       child: GestureDetector(
         onTap: _flipCard,
@@ -67,8 +71,8 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
                 ..rotateY(_animation.value * 3.14159),
               alignment: Alignment.center,
               child: Container(
-                width: 300,
-                height: 200,
+                width: cardWidth,
+                height: cardHeight,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -104,28 +108,19 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
         children: [
           Text(
             widget.vocabulary.japanese,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             widget.vocabulary.reading,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 18, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           const Text(
             'Tap to flip',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.blue,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.blue),
           ),
         ],
       ),
@@ -133,17 +128,14 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
   }
 
   Widget _buildBackContent() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             widget.vocabulary.english,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -151,52 +143,54 @@ class _FlashcardWidgetState extends ConsumerState<FlashcardWidget>
           const SizedBox(height: 20),
           Text(
             widget.vocabulary.exampleSentence,
-            style: const TextStyle(
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontSize: 16),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             widget.vocabulary.exampleReading,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           Text(
             widget.vocabulary.exampleEnglish,
-            style: const TextStyle(
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(playIncorrectSoundProvider)();
-                  widget.onIncorrect();
-                },
-                icon: const Icon(Icons.close, color: Colors.white),
-                label: const Text('Incorrect', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(playIncorrectSoundProvider)();
+                    widget.onIncorrect();
+                  },
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  label: const Text(
+                    'Incorrect',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(playCorrectSoundProvider)();
-                  widget.onCorrect();
-                },
-                icon: const Icon(Icons.check, color: Colors.white),
-                label: const Text('Correct', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(playCorrectSoundProvider)();
+                    widget.onCorrect();
+                  },
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  label: const Text(
+                    'Correct',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
                 ),
               ),
             ],

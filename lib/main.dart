@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/conversation.dart';
 import 'models/grammar_exercise.dart';
-import 'services/grammar_exercise_service.dart';
 import 'providers/user_provider.dart';
 import 'providers/progress_provider.dart';
+import 'services/grammar_exercise_service.dart';
 import 'widgets/progress_dashboard.dart';
 import 'widgets/flashcard_screen.dart';
 import 'widgets/conversation_screen.dart';
 import 'widgets/grammar_exercise_screen.dart';
 
 void main() {
-  runApp(
-    ProviderScope(
-      child: MainApp(),
-    ),
-  );
+  runApp(ProviderScope(child: MainApp()));
 }
 
 class MainApp extends ConsumerWidget {
@@ -25,7 +21,6 @@ class MainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize user and progress data
     final userAsync = ref.watch(userInitializationProvider);
-    final progressAsync = ref.watch(initializeProgressProvider);
 
     return MaterialApp(
       title: 'e907',
@@ -37,56 +32,77 @@ class MainApp extends ConsumerWidget {
         data: (user) {
           if (user == null) {
             return const Scaffold(
-              body: Center(
-                child: Text('Error loading user data'),
-              ),
+              body: Center(child: Text('Error loading user data')),
             );
           }
 
-          // Update user provider with loaded user
-          ref.read(userProvider.notifier).state = user;
+          final progressAsync = ref.watch(initializeProgressProvider(user.id));
 
           return progressAsync.when(
             data: (progressMap) {
-              if (progressMap == null) {
-                return const Scaffold(
-                  body: Center(
-                    child: Text('Error loading progress data'),
-                  ),
-                );
-              }
-
-              // Update progress provider with loaded progress
-              ref.read(progressProvider.notifier).state = progressMap;
-
               return const MainScreen();
             },
             loading: () => const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: Center(child: CircularProgressIndicator()),
             ),
             error: (error, stack) => Scaffold(
-              body: Center(
-                child: Text('Error loading progress: $error'),
-              ),
+              body: Center(child: Text('Error loading progress: $error')),
             ),
           );
         },
-        loading: () => const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-        error: (error, stack) => Scaffold(
-          body: Center(
-            child: Text('Error loading user: $error'),
-          ),
-        ),
+        loading: () =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
+        error: (error, stack) =>
+            Scaffold(body: Center(child: Text('Error loading user: $error'))),
       ),
       routes: {
         '/flashcards': (context) => const FlashcardScreen(),
+        '/conversations': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Conversation) {
+            return ConversationScreen(conversation: args);
+          }
+          return const _ErrorScreen(message: 'Invalid conversation');
+        },
+        '/grammar': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is GrammarExercise) {
+            return GrammarExerciseScreen(exercise: args);
+          }
+          return const _ErrorScreen(message: 'Invalid exercise');
+        },
       },
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (context) =>
+            _ErrorScreen(message: 'Page not found: ${settings.name}'),
+      ),
+    );
+  }
+}
+
+class _ErrorScreen extends StatelessWidget {
+  final String message;
+  const _ErrorScreen({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Error')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(message, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -103,7 +119,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Conversation? _selectedConversation;
   GrammarExercise? _selectedExercise;
 
-  final GrammarExerciseService _grammarService = GrammarExerciseService(null);
+  final GrammarExerciseService _grammarService =
+      GrammarExerciseService.instance;
 
   void _onNavigationTapped(int index) {
     setState(() {
@@ -160,18 +177,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           children: [
             const Text(
               'Learning Modules',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             const Text(
               'Flashcards',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Card(
               elevation: 4,
@@ -193,10 +204,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             const SizedBox(height: 20),
             const Text(
               'Grammar Exercises',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             ...grammarExercises.map((exercise) {
               return Card(
@@ -204,7 +212,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.edit, color: Colors.purple),
                   title: Text(exercise.title),
-                  subtitle: Text('${exercise.questions.length} questions • ${exercise.difficulty} stars'),
+                  subtitle: Text(
+                    '${exercise.questions.length} questions • ${exercise.difficulty} stars',
+                  ),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () => _openExercise(exercise),
                 ),
@@ -213,10 +223,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             const SizedBox(height: 20),
             const Text(
               'Conversations',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             ...sampleConversations.map((conversation) {
               return Card(
@@ -247,14 +254,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       body: _getCurrentPage(),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Learn',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Learn'),
           BottomNavigationBarItem(
             icon: Icon(Icons.leaderboard),
             label: 'Progress',

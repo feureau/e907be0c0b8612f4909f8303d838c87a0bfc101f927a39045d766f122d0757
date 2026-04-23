@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/progress.dart';
 import '../providers/progress_provider.dart';
 import '../providers/user_provider.dart';
@@ -36,7 +36,7 @@ class ProgressDashboard extends ConsumerWidget {
           const SizedBox(height: 20),
           _buildCategoryChart(japaneseProgress),
           const SizedBox(height: 20),
-          _buildAchievementsSection(japaneseProgress),
+          _buildAchievementsSection(context, japaneseProgress),
         ],
       ),
     );
@@ -51,26 +51,22 @@ class ProgressDashboard extends ConsumerWidget {
           children: [
             Text(
               'Your Progress',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               'Keep up the great work!',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
             ),
           ],
         ),
         CircleAvatar(
           radius: 30,
           backgroundColor: Theme.of(context).primaryColor,
-          child: const Icon(
-            Icons.school,
-            color: Colors.white,
-            size: 30,
-          ),
+          child: const Icon(Icons.school, color: Colors.white, size: 30),
         ),
       ],
     );
@@ -79,9 +75,7 @@ class ProgressDashboard extends ConsumerWidget {
   Widget _buildStreakCard(Progress progress) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -97,28 +91,19 @@ class ProgressDashboard extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Daily Streak',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               '${progress.streak} days',
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 5),
             Text(
               'Keep learning to maintain your streak!',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
         ),
@@ -129,9 +114,7 @@ class ProgressDashboard extends ConsumerWidget {
   Widget _buildXPCard(Progress progress) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -139,28 +122,18 @@ class ProgressDashboard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.yellow[700],
-                  size: 30,
-                ),
+                Icon(Icons.star, color: Colors.yellow[700], size: 30),
                 const SizedBox(width: 10),
                 Text(
                   'Total Experience',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Text(
               '${progress.totalXP} XP',
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 5),
             LinearProgressIndicator(
@@ -171,10 +144,7 @@ class ProgressDashboard extends ConsumerWidget {
             const SizedBox(height: 5),
             Text(
               'Level ${progress.totalXP ~/ 1000 + 1}',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ],
         ),
@@ -191,9 +161,7 @@ class ProgressDashboard extends ConsumerWidget {
 
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -201,10 +169,7 @@ class ProgressDashboard extends ConsumerWidget {
           children: [
             Text(
               'Category Breakdown',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -238,9 +203,7 @@ class ProgressDashboard extends ConsumerWidget {
                             final category = categoryData[index].key;
                             return Text(
                               category.substring(0, 3),
-                              style: const TextStyle(
-                                fontSize: 10,
-                              ),
+                              style: const TextStyle(fontSize: 10),
                             );
                           }
                           return const Text('');
@@ -268,12 +231,10 @@ class ProgressDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildAchievementsSection(Progress progress) {
+  Widget _buildAchievementsSection(BuildContext context, Progress progress) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -281,10 +242,7 @@ class ProgressDashboard extends ConsumerWidget {
           children: [
             Text(
               'Achievements',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             if (progress.achievements.isEmpty)
@@ -296,7 +254,9 @@ class ProgressDashboard extends ConsumerWidget {
                 children: progress.achievements.map((achievement) {
                   return Chip(
                     label: Text(achievement.title),
-                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).primaryColor.withOpacity(0.1),
                     avatar: const Icon(
                       Icons.emoji_events,
                       color: Colors.amber,

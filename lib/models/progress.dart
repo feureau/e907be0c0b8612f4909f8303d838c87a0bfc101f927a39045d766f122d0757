@@ -22,7 +22,7 @@ class Progress {
     String? language,
     int? streak,
     int? totalXP,
-    Map<String>? categoryXP,
+    Map<String, int>? categoryXP,
     List<Achievement>? achievements,
     DateTime? lastActivity,
   }) {
@@ -59,7 +59,9 @@ class Progress {
       achievements: (json['achievements'] as List)
           .map((a) => Achievement.fromJson(a))
           .toList(),
-      lastActivity: DateTime.fromMillisecondsSinceEpoch(json['lastActivity'] as int),
+      lastActivity: DateTime.fromMillisecondsSinceEpoch(
+        json['lastActivity'] as int,
+      ),
     );
   }
 }

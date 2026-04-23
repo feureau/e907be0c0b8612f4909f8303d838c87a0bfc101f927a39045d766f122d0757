@@ -1,15 +1,15 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
 import '../models/conversation.dart';
-import '../providers/audio_provider.dart';
+import 'audio_service.dart';
 
 class ConversationService {
   final AudioService audioService;
-  
+
   ConversationService(this.audioService);
 
   /// Starts a conversation session
-  Future<ConversationSession> startConversation(Conversation conversation) async {
+  Future<ConversationSession> startConversation(
+    Conversation conversation,
+  ) async {
     return ConversationSession(
       conversation: conversation,
       currentIndex: 0,
@@ -25,13 +25,13 @@ class ConversationService {
   ) async {
     // In a real implementation, you would analyze the user's response
     // For now, we'll just record it and move to the next turn
-    
+
     final newResponses = List<String>.from(session.userResponses);
     newResponses.add(userResponse);
-    
+
     // Calculate score based on response (simplified)
     final scoreIncrement = _calculateScoreIncrement(userResponse);
-    
+
     return session.copyWith(
       userResponses: newResponses,
       currentIndex: session.currentIndex + 1,

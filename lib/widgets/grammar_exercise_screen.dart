@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/grammar_exercise.dart';
 import '../services/grammar_exercise_service.dart';
 import '../providers/audio_provider.dart';
 import '../providers/progress_provider.dart';
 import '../providers/user_provider.dart';
+import '../utils/constants.dart';
 
 class GrammarExerciseScreen extends ConsumerStatefulWidget {
   final GrammarExercise exercise;
@@ -12,7 +13,8 @@ class GrammarExerciseScreen extends ConsumerStatefulWidget {
   const GrammarExerciseScreen({super.key, required this.exercise});
 
   @override
-  ConsumerState<GrammarExerciseScreen> createState() => _GrammarExerciseScreenState();
+  ConsumerState<GrammarExerciseScreen> createState() =>
+      _GrammarExerciseScreenState();
 }
 
 class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
@@ -27,7 +29,7 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
   @override
   void initState() {
     super.initState();
-    _service = GrammarExerciseService(ref.read(audioServiceProvider));
+    _service = GrammarExerciseService.instance;
   }
 
   void _submitAnswer(String answer) {
@@ -37,7 +39,9 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
     setState(() {
       _userAnswers[_currentQuestionIndex] = answer;
       _showExplanation = true;
-      _feedbackMessage = isCorrect ? 'Correct!' : 'Incorrect. ${currentQuestion.explanation}';
+      _feedbackMessage = isCorrect
+          ? 'Correct!'
+          : 'Incorrect. ${currentQuestion.explanation}';
     });
 
     if (isCorrect) {
@@ -71,7 +75,11 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
     // Award XP
     final user = ref.read(userProvider);
     if (user != null && _result!.xpEarned > 0) {
-      ref.read(addXPProvider)(user.id, _result!.xpEarned, 'Grammar');
+      ref.read(addXPProvider)(
+        AppConstants.defaultLanguage,
+        _result!.xpEarned,
+        'Grammar',
+      );
     }
 
     setState(() {
@@ -109,12 +117,15 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
       body: Column(
         children: [
           LinearProgressIndicator(
-            value: (_currentQuestionIndex + 1) / widget.exercise.questions.length,
+            value:
+                (_currentQuestionIndex + 1) / widget.exercise.questions.length,
             backgroundColor: Colors.grey[300],
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
           ),
           Expanded(
-            child: _buildQuestionScreen(widget.exercise.questions[_currentQuestionIndex]),
+            child: _buildQuestionScreen(
+              widget.exercise.questions[_currentQuestionIndex],
+            ),
           ),
           if (_feedbackMessage != null)
             Container(
@@ -184,10 +195,14 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
             child: ElevatedButton(
               onPressed: _showExplanation ? null : () => _submitAnswer(option),
               style: ElevatedButton.styleFrom(
-                backgroundColor: backgroundColor ?? (isSelected ? Colors.blue[50] : Colors.white),
+                backgroundColor:
+                    backgroundColor ??
+                    (isSelected ? Colors.blue[50] : Colors.white),
                 foregroundColor: Colors.black87,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                side: BorderSide(color: isSelected ? Colors.blue : Colors.grey[300]!),
+                side: BorderSide(
+                  color: isSelected ? Colors.blue : Colors.grey[300]!,
+                ),
               ),
               child: Text(option, style: const TextStyle(fontSize: 16)),
             ),
@@ -212,11 +227,13 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
             filled: true,
             fillColor: _showExplanation
                 ? (question.correctAnswer == _userAnswers[_currentQuestionIndex]
-                    ? Colors.green[50]
-                    : Colors.red[50])
+                      ? Colors.green[50]
+                      : Colors.red[50])
                 : Colors.white,
           ),
-          onSubmitted: _showExplanation ? null : (value) => _submitAnswer(value),
+          onSubmitted: _showExplanation
+              ? null
+              : (value) => _submitAnswer(value),
           enabled: !_showExplanation,
         ),
         const SizedBox(height: 16),
@@ -252,14 +269,19 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                _result!.accuracy >= 0.7 ? Icons.celebration : Icons.sentiment_satisfied,
+                _result!.accuracy >= 0.7
+                    ? Icons.celebration
+                    : Icons.sentiment_satisfied,
                 size: 80,
                 color: _result!.accuracy >= 0.7 ? Colors.amber : Colors.blue,
               ),
               const SizedBox(height: 24),
               Text(
                 _result!.accuracy >= 0.7 ? 'Great Job!' : 'Keep Practicing!',
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -268,19 +290,25 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${_result!.accuracy.toStringAsFixed(0)}% accuracy',
+                '${(_result!.accuracy * 100).toStringAsFixed(0)}% accuracy',
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber[100],
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '+${_result!.xpEarned} XP earned!',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -289,7 +317,10 @@ class _GrammarExerciseScreenState extends ConsumerState<GrammarExerciseScreen> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
                 ),
                 child: const Text('Continue'),
               ),

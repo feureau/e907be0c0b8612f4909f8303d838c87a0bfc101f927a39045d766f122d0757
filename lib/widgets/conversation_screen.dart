@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/conversation.dart';
 import '../services/conversation_service.dart';
 import '../providers/audio_provider.dart';
 import '../providers/progress_provider.dart';
-import '../providers/user_provider.dart';
+import '../utils/constants.dart';
 
 class ConversationScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -17,7 +17,7 @@ class ConversationScreen extends ConsumerStatefulWidget {
 
 class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   late ConversationService _conversationService;
-  late ConversationSession _session;
+  ConversationSession? _session;
   final TextEditingController _responseController = TextEditingController();
   bool _isProcessing = false;
   String _feedbackMessage = '';
@@ -35,7 +35,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
       _isProcessing = true;
     });
 
-    _session = await _conversationService.startConversation(widget.conversation);
+    final session = await _conversationService.startConversation(
+      widget.conversation,
+    );
+    if (!mounted) {
+      return;
+    }
+    _session = session;
     _updateResponseSuggestions();
 
     setState(() {
@@ -44,15 +50,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   }
 
   void _updateResponseSuggestions() {
-    final currentTurn = _session.currentTurn;
+    final session = _session;
+    if (session == null) {
+      _responseSuggestions = [];
+      return;
+    }
+    final currentTurn = session.currentTurn;
     if (currentTurn != null) {
-      _responseSuggestions = _conversationService.generateResponseSuggestions(currentTurn);
+      _responseSuggestions = _conversationService.generateResponseSuggestions(
+        currentTurn,
+      );
     } else {
       _responseSuggestions = [];
     }
   }
 
   Future<void> _submitResponse() async {
+    final session = _session;
+    if (session == null) return;
+
     final response = _responseController.text.trim();
     if (response.isEmpty) return;
 
@@ -61,10 +77,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     });
 
     // Process the user response
-    _session = await _conversationService.processUserResponse(_session, response);
+    _session = await _conversationService.processUserResponse(
+      session,
+      response,
+    );
 
     // Play audio for the next turn if available
-    final nextTurn = _session.currentTurn;
+    final updatedSession = _session;
+    final nextTurn = updatedSession?.currentTurn;
     if (nextTurn != null && !nextTurn.isUserResponse) {
       await _conversationService.playTurnAudio(nextTurn);
     }
@@ -81,26 +101,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     // Add delay for feedback visibility
     await Future.delayed(const Duration(seconds: 1));
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _feedbackMessage = '';
     });
 
     // Check if conversation is completed
-    if (_session.isCompleted) {
+    if (_session?.isCompleted ?? false) {
       await _completeConversation();
     }
   }
 
   Future<void> _completeConversation() async {
-    // Award XP for completing conversation
-    final user = ref.read(userProvider);
-    if (user != null) {
-      ref.read(addXPProvider)(
-        user.id, 
-        widget.conversation.xpReward, 
-        'Conversation'
-      );
-    }
+    await ref.read(addXPProvider)(
+      AppConstants.defaultLanguage,
+      widget.conversation.xpReward,
+      'Conversation',
+    );
 
     // Show completion dialog
     if (mounted) {
@@ -133,8 +152,26 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   }
 
   @override
+  void dispose() {
+    _responseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currentTurn = _session.currentTurn;
+    final session = _session;
+    if (session == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.conversation.title),
+          backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final currentTurn = session.currentTurn;
 
     return Scaffold(
       appBar: AppBar(
@@ -156,11 +193,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         children: [
           // Progress indicator
           LinearProgressIndicator(
-            value: _session.progress,
+            value: session.progress,
             backgroundColor: Colors.grey[300],
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
           ),
-          
+
           // Conversation log
           Expanded(
             child: ListView(
@@ -176,20 +213,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                       children: [
                         Text(
                           'Scenario: ${widget.conversation.scenario}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // Conversation turns
                 ..._buildConversationLog(),
-                
+
                 // Feedback message
                 if (_feedbackMessage.isNotEmpty)
                   Card(
@@ -205,9 +240,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               ],
             ),
           ),
-          
+
           // Response input area
-          if (!_session.isCompleted) ...[
+          if (!session.isCompleted) ...[
             // Response suggestions
             if (_responseSuggestions.isNotEmpty)
               Container(
@@ -229,7 +264,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   }).toList(),
                 ),
               ),
-            
+
             // Input field
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -263,29 +298,34 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   }
 
   List<Widget> _buildConversationLog() {
+    final session = _session;
+    if (session == null) {
+      return const <Widget>[];
+    }
+
     final widgets = <Widget>[];
-    
+
     // Show previous turns
-    for (int i = 0; i < _session.currentIndex; i++) {
-      final turn = _session.conversation.turns[i];
+    for (int i = 0; i < session.currentIndex; i++) {
+      final turn = session.conversation.turns[i];
       final isUserTurn = turn.isUserResponse;
-      final userResponse = i ~/ 2 < _session.userResponses.length 
-          ? _session.userResponses[i ~/ 2] 
+      final userResponse = i ~/ 2 < session.userResponses.length
+          ? session.userResponses[i ~/ 2]
           : '';
-      
+
       if (isUserTurn) {
         widgets.add(_buildUserMessage(userResponse));
       } else {
         widgets.add(_buildSpeakerMessage(turn));
       }
     }
-    
+
     // Show current turn if it's the speaker's turn
-    final currentTurn = _session.currentTurn;
+    final currentTurn = session.currentTurn;
     if (currentTurn != null && !currentTurn.isUserResponse) {
       widgets.add(_buildSpeakerMessage(currentTurn));
     }
-    
+
     return widgets;
   }
 
@@ -314,10 +354,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               ),
             ],
             const SizedBox(height: 4),
-            Text(
-              turn.translation,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            Text(turn.translation, style: const TextStyle(color: Colors.grey)),
           ],
         ),
       ),
@@ -334,10 +371,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           color: Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          response,
-          style: const TextStyle(color: Colors.white),
-        ),
+        child: Text(response, style: const TextStyle(color: Colors.white)),
       ),
     );
   }
